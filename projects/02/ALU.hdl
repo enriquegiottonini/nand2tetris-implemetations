@@ -42,5 +42,30 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+	/* Choose to convert x to 0 and then to negate it or not*/
+	Mux16(a=x, b[0..15]=false, sel=zx, out=x1);
+	Not16(in=x1, out=nx1);
+	Mux16(a=x1, b=nx1, sel=nx,  out=x2);
+	/* Same process with y */
+	Mux16(a=y, b[0..15]=false, sel=zy, out=y1);
+	Not16(in=y1, out=ny1);
+	Mux16(a=y1, b=ny1,sel=ny, out=y2);
+	/* Choose between x+y or xANDy */
+	Add16(a=x2, b=y2, out=xplusy);
+	And16(a=x2, b=y2, out=xandy);
+	Mux16(a=xandy, b=xplusy, sel=f, out=fxy);
+	/* Choose between negating the last result or not */
+	Not16(in=fxy, out=notfxy);
+	Mux16(a=fxy, b=notfxy,sel=no,  out=out, out[15]=nsign, out[0..7]=right, out[8..15]=left);
+
+	/* In the book 18 operations are described as a result of this
+	   algorithm but since there are 6 control bits there are 2^6 = 64 operations. */
+
+	/* 1-bit outputs */
+	Or8Way(in=left, out=or1);
+	Or8Way(in=right, out=or2);
+	Or(a=or1, b=or2, out=orr);
+	Not(in=orr, out=zr);
+
+	And(a=nsign, b=true, out=ng);	
 }
